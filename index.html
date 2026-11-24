@@ -1,1 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNSPOKEN — Your Voice Matters</title>
 
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+ font-family:Arial,sans-serif;
+ background:#f4f4f8;
+ color:#222;
+ transition:.3s;
+}
+body.dark{background:#12121b;color:white}
+header{
+ background:#171727;color:white;
+ padding:22px 15px;text-align:center;
+}
+header h1{letter-spacing:5px;font-size:30px}
+header p{color:#bbb;margin-top:8px}
+nav{
+ display:flex;justify-content:center;
+ flex-wrap:wrap;gap:10px;
+ padding:15px;
+ background:#24243a;
+}
+nav button{
+ border:0;padding:10px 16px;
+ border-radius:20px;
+ background:#41415d;color:white;
+ cursor:pointer;
+}
+.container{max-width:700px;margin:25px auto;padding:15px}
+.card{
+ background:white;padding:20px;
+ border-radius:15px;margin-bottom:18px;
+ box-shadow:0 3px 15px #0001;
+}
+.dark .card{background:#222234;color:white}
+input,textarea,select{
+ width:100%;padding:13px;margin:8px 0;
+ border:1px solid #ddd;border-radius:9px;
+ font-size:15px;
+}
+button.action{
+ border:0;padding:10px 15px;
+ border-radius:8px;background:#6254d9;
+ color:white;cursor:pointer;margin:5px 3px;
+}
+.post{line-height:1.7;white-space:pre-wrap}
+.small{font-size:12px;color:gray;margin:8px 0}
+footer{text-align:center;padding:25px;color:gray}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>UNSPOKEN</h1>
+<p>Your words. Your feelings. Your world.</p>
+</header>
+
+<nav>
+<button onclick="showHome()">Home</button>
+<button onclick="showWrite()">Write</button>
+<button onclick="showAbout()">About</button>
+<button onclick="toggleTheme()">🌙 Theme</button>
+</nav>
+
+<div class="container">
+
+<div class="card" id="home">
+<h2>Welcome to UNSPOKEN</h2>
+<p style="margin:10px 0">
+A safe space to express your thoughts and feelings.
+</p>
+<input id="search" placeholder="Search posts..." oninput="renderPosts()">
+<select id="filter" onchange="renderPosts()">
+<option value="All">All Categories</option>
+<option>Life</option>
+<option>Feelings</option>
+<option>Poetry</option>
+<option>Stories</option>
+<option>Thoughts</option>
+</select>
+</div>
+
+<div class="card hidden" id="write">
+<h2>Create Your Post</h2>
+<input id="author" placeholder="Your nickname">
+<select id="category">
+<option>Life</option>
+<option>Feelings</option>
+<option>Poetry</option>
+<option>Stories</option>
+<option>Thoughts</option>
+</select>
+<textarea id="content" rows="5"
+placeholder="Write what is in your heart..."></textarea>
+<button class="action" onclick="addPost()">Publish Post</button>
+</div>
+
+<div id="posts"></div>
+
+<div class="card hidden" id="about">
+<h2>About UNSPOKEN</h2>
+<p style="margin-top:12px;line-height:1.8">
+UNSPOKEN is a place where everyone can share
+thoughts, stories, poetry and feelings.
+Every voice matters.
+</p>
+</div>
+
+<div class="card">
+<h3>Admin Dashboard</h3>
+<p class="small">Basic local post management</p>
+<p id="total">Total Posts: 0</p>
+</div>
+
+</div>
+
+<footer>
+© 2026 UNSPOKEN. All Rights Reserved.
+<br>Your Voice Matters.
+</footer>
+
+<script>
+let posts = JSON.parse(localStorage.getItem("unspokenPosts") || "[]");
+
+function save(){
+ localStorage.setItem("unspokenPosts",JSON.stringify(posts));
+}
+
+function showHome(){
+ home.classList.remove("hidden");
+ write.classList.add("hidden");
+ about.classList.add("hidden");
+}
+
+function showWrite(){
+ home.classList.remove("hidden");
+ write.classList.remove("hidden");
+ about.classList.add("hidden");
+}
+
+function showAbout(){
+ home.classList.add("hidden");
+ write.classList.add("hidden");
+ about.classList.remove("hidden");
+}
+
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+}
+
+function addPost(){
+ let name=document.getElementById("author").value.trim();
+ let content=document.getElementById("content").value.trim();
+ let category=document.getElementById("category").value;
+
+ if(!name || !content){
+  alert("Please fill in all fields!");
+  return;
+ }
+
+ posts.unshift({
+  id:Date.now(),
+  name,
+  content,
+  category,
+  likes:0,
+  comments:[]
+ });
+
+ save();
+ document.getElementById("content").value="";
+ renderPosts();
+ showHome();
+}
+
+function likePost(id){
+ let p=posts.find(x=>x.id===id);
+ if(p){p.likes++;save();renderPosts();}
+}
+
+function commentPost(id){
+ let text=prompt("Write your comment:");
+ if(!text || !text.trim())return;
+ let p=posts.find(x=>x.id===id);
+ if(p){p.comments.push(text.trim());save();renderPosts();}
+}
+
+function deletePost(id){
+ if(!confirm("Delete this post?"))return;
+ posts=posts.filter(p=>p.id!==id);
+ save();
+ renderPosts();
+}
+
+function reportPost(id){
+ alert("Report noted on this device. No report is sent to an admin yet.");
+}
+
+function renderPosts(){
+ let box=document.getElementById("posts");
+ let search=document.getElementById("search").value.toLowerCase();
+ let filter=document.getElementById("filter").value;
+
+ box.innerHTML="";
+
+ let filtered=posts.filter(p=>
+ (p.content.toLowerCase().includes(search) ||
+ p.name.toLowerCase().includes(search)) &&
+ (filter==="All" || p.category===filter)
+ );
+
+ filtered.forEach(p=>{
+ let div=document.createElement("div");
+ div.className="card";
+
+ let title=document.createElement("h3");
+ title.textContent=p.name;
+
+ let meta=document.createElement("p");
+ meta.className="small";
+ meta.textContent=p.category;
+
+ let content=document.createElement("p");
+ content.className="post";
+ content.textContent=p.content;
+
+ let buttons=document.createElement("div");
+ buttons.innerHTML=`
+ <button class="action" onclick="likePost(${p.id})">❤️ ${p.likes}</button>
+ <button class="action" onclick="commentPost(${p.id})">💬 Comment</button>
+ <button class="action" onclick="reportPost(${p.id})">🚩 Report</button>
+ <button class="action" onclick="deletePost(${p.id})">🗑 Delete</button>
+ `;
+
+ let comments=document.createElement("div");
+ comments.className="small";
+ p.comments.forEach(c=>{
+  let item=document.createElement("p");
+  item.textContent="💬 "+c;
+  comments.appendChild(item);
+ });
+
+ div.append(title,meta,content,buttons,comments);
+ box.appendChild(div);
+ });
+
+ document.getElementById("total").textContent=
+ "Total Posts: "+posts.length;
+}
+
+renderPosts();
+</script>
+
+</body>
+  </html>
